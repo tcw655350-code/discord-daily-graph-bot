@@ -21,6 +21,7 @@ jobs:
           node-version: '18'
 
       - name: Install dependencies
+        working-directory: ./
         run: |
           # package-lock.json is not present in this repo, so use npm install in CI
           npm install --no-audit --no-fund
