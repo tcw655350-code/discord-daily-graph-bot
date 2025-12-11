@@ -28,13 +28,29 @@ jobs:
         with:
           node-version: '18'
 
+      - name: Locate package.json files
+        run: |
+          echo "Searching for package.json files in the repo...";
+          find "$GITHUB_WORKSPACE" -maxdepth 4 -type f -name 'package.json' -print || true
+          echo "Also search current directory:"; find . -maxdepth 4 -type f -name 'package.json' -print || true
+
       - name: Install dependencies
+        continue-on-error: true
         run: |
           # package-lock.json is not present in this repo, so use npm install in CI
           cd "$GITHUB_WORKSPACE"
           echo "Installing dependencies in $PWD";
           ls -la || true
-          npm install --no-audit --no-fund
+          npm install --no-audit --no-fund || true
+
+      - name: Collect npm debug logs
+        if: always()
+        run: |
+          echo "Collecting npm debug logs (if any) into workspace";
+          mkdir -p "$GITHUB_WORKSPACE/logs" || true
+          cp /home/runner/.npm/_logs/*.log "$GITHUB_WORKSPACE/logs/" 2>/dev/null || true
+          echo "Logs copied:"; ls -la "$GITHUB_WORKSPACE/logs" || true
+          echo "Tail of npm logs (if present):"; for f in "$GITHUB_WORKSPACE"/logs/*.log; do echo "===== $f ====="; tail -n 200 "$f" || true; done
 
       - name: Run bot (generate + post) and capture logs
         env:
@@ -56,4 +72,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: run-logs
-          path: run.log
+          path: |
+            run.log
+            logs/**
