@@ -38,7 +38,7 @@ jobs:
         continue-on-error: true
         run: |
           # package-lock.json is not present in this repo, so use npm install in CI
-          cd "$GITHUB_WORKSPACE"
+          cd "$GITHUB_WORKSPACE/discord-daily-bot"
           echo "Installing dependencies in $PWD";
           ls -la || true
           npm install --no-audit --no-fund || true
@@ -59,30 +59,13 @@ jobs:
           WEBPAGE_URL: 'https://uma.moe/circles/231400257'
           DELETE_EXISTING: 'true'
         run: |
-          # run the bot and capture stdout/stderr
-          cd "$GITHUB_WORKSPACE"
-          echo "Listing repo root:"; ls -la . || true
+          # run the bot and capture stdout/stderr from the project subfolder
+          cd "$GITHUB_WORKSPACE/discord-daily-bot"
+          echo "Listing project folder:"; ls -la . || true
           echo "Node version: $(node -v)";
           echo "NPM version: $(npm -v)";
-          echo "Searching for index.js files...";
-          find . -maxdepth 4 -type f -name 'index.js' -print || true
-          echo "Deciding which index.js to run...";
-          if [ -f ./index.js ]; then
-            ENTRY=./index.js
-          elif [ -f ./discord-daily-bot/index.js ]; then
-            ENTRY=./discord-daily-bot/index.js
-          else
-            ENTRY=$(find . -maxdepth 4 -type f -name 'index.js' | head -n1 || true)
-          fi
-          echo "ENTRY=$ENTRY";
-          if [ -n "$ENTRY" -a -f "$ENTRY" ]; then
-            echo "Running node $ENTRY";
-            node "$ENTRY" > run.log 2>&1 || true
-          else
-            echo "No index.js entrypoint found; writing diagnostic to run.log";
-            echo "No index.js found in repo (searched maxdepth 4)." > run.log
-            echo "Files at repo root:" >> run.log; ls -la >> run.log
-          fi
+          echo "Running node index.js";
+          node index.js > run.log 2>&1 || true
           echo "=== Bot run log ==="
           tail -n +1 run.log || true
 
