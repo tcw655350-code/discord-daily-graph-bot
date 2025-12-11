@@ -15,19 +15,25 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Debug workspace
+        run: |
+          echo "PWD=$(pwd)";
+          echo "List root:"; ls -la . || true;
+          echo "List repo subfolders:"; ls -la */ || true;
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
 
       - name: Install dependencies
-        working-directory: ./
+        working-directory: discord-daily-bot
         run: |
           # package-lock.json is not present in this repo, so use npm install in CI
           npm install --no-audit --no-fund
 
       - name: Run bot (generate + post) and capture logs
-        working-directory: ./
+        working-directory: discord-daily-bot
         env:
           DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
           CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
