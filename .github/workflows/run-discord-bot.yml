@@ -2,44 +2,47 @@ name: Run Discord Daily Bot (schedule + manual)
 
 on:
   schedule:
-    - cron: '0 */6 * * *'    # every 6 hours UTC
+    - cron: '0 */6 * * *' # every 6 hours
   workflow_dispatch:
+  push:
+    branches: [ main ]
 
 jobs:
-  run-bot:
+  smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-
     steps:
-      - name: Checkout (optional)
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Pull image
-        run: |
-          IMAGE="stressgilababi/discord-daily-bot:latest"
-          echo "Pulling $IMAGE"
-          docker pull "$IMAGE"
+      - name: Announce run
+        run: echo "Discord Daily Bot scheduled/manual run at $(date)" > run.txt
 
-      - name: Run container and capture logs
-        env:
-          DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
-          CHANNEL_ID:   ${{ secrets.CHANNEL_ID }}
-          WEBPAGE_URL:  ${{ secrets.WEBPAGE_URL }}
-          AzureWebJobsStorage: ${{ secrets.AZURE_WEBJOBS_STORAGE }}
-        run: |
-          LOGFILE=run.log
-          echo "Starting container; logs -> $LOGFILE"
-          docker run --rm \
-            -e DISCORD_TOKEN="$DISCORD_TOKEN" \
-            -e CHANNEL_ID="$CHANNEL_ID" \
-            -e WEBPAGE_URL="$WEBPAGE_URL" \
-            -e AzureWebJobsStorage="$AzureWebJobsStorage" \
-            "stressgilababi/discord-daily-bot:latest" > "$LOGFILE" 2>&1 || true
-          echo "Container finished; last 200 lines:"
-          tail -n 200 "$LOGFILE" || true
-
-      - name: Upload runtime logs as artifact
+      - name: Upload log
         uses: actions/upload-artifact@v4
         with:
           name: run-logs
-          path: run.log
+          path: run.txt
+name: Run Discord Daily Bot (schedule + manual)
+
+on:
+  schedule:
+    - cron: '0 */6 * * *' # every 6 hours
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Announce run
+        run: echo "Discord Daily Bot scheduled/manual run at $(date)" > run.txt
+
+      - name: Upload log
+        uses: actions/upload-artifact@v4
+        with:
+          name: run-logs
+          path: run.txt
