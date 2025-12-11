@@ -8,17 +8,35 @@ on:
     branches: [ main ]
 
 jobs:
-  smoke:
+  run-bot:
+    name: Run and log bot
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Announce run
-        run: echo "Discord Daily Bot scheduled/manual run at $(date)" > run.txt
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
 
-      - name: Upload log
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run bot (generate + post) and capture logs
+        env:
+          DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+          CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
+          WEBPAGE_URL: 'https://uma.moe/circles/231400257'
+          DELETE_EXISTING: 'true'
+        run: |
+          # run the bot and capture stdout/stderr
+          node index.js > run.log 2>&1 || true
+          echo "=== Bot run log ==="
+          tail -n +1 run.log || true
+
+      - name: Upload run logs
         uses: actions/upload-artifact@v4
         with:
           name: run-logs
-          path: run.txt
+          path: run.log
