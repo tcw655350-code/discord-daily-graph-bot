@@ -37,8 +37,15 @@ jobs:
       - name: Install dependencies
         continue-on-error: true
         run: |
-          # package-lock.json is not present in this repo, so use npm install in CI
-          cd "$GITHUB_WORKSPACE/discord-daily-bot"
+          # Detect project directory (where package.json lives) and install there
+          echo "Detecting project directory containing package.json..."
+          PROJECT_DIR=$(find "$GITHUB_WORKSPACE" -maxdepth 3 -type f -name 'package.json' -print -quit | xargs -r dirname || true)
+          if [ -z "$PROJECT_DIR" ]; then
+            echo "No package.json found under $GITHUB_WORKSPACE (maxdepth 3). Falling back to repo root.";
+            PROJECT_DIR="$GITHUB_WORKSPACE"
+          fi
+          echo "PROJECT_DIR=$PROJECT_DIR";
+          cd "$PROJECT_DIR"
           echo "Installing dependencies in $PWD";
           ls -la || true
           npm install --no-audit --no-fund || true
@@ -59,8 +66,15 @@ jobs:
           WEBPAGE_URL: 'https://uma.moe/circles/231400257'
           DELETE_EXISTING: 'true'
         run: |
-          # run the bot and capture stdout/stderr from the project subfolder
-          cd "$GITHUB_WORKSPACE/discord-daily-bot"
+          # Detect project directory and run the bot from there
+          echo "Detecting project directory containing package.json..."
+          PROJECT_DIR=$(find "$GITHUB_WORKSPACE" -maxdepth 3 -type f -name 'package.json' -print -quit | xargs -r dirname || true)
+          if [ -z "$PROJECT_DIR" ]; then
+            echo "No package.json found under $GITHUB_WORKSPACE (maxdepth 3). Falling back to repo root.";
+            PROJECT_DIR="$GITHUB_WORKSPACE"
+          fi
+          echo "PROJECT_DIR=$PROJECT_DIR";
+          cd "$PROJECT_DIR"
           echo "Listing project folder:"; ls -la . || true
           echo "Node version: $(node -v)";
           echo "NPM version: $(npm -v)";
