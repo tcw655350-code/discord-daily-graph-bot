@@ -2,7 +2,7 @@ name: Run Discord Daily Bot (schedule + manual)
 
 on:
   schedule:
-    - cron: '0 */6 * * *' # every 6 hours
+    - cron: '0 16 * * *' # daily at 4pm GMT
   workflow_dispatch:
   push:
     branches: [ main ]
@@ -14,6 +14,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Restore downloads cache
+        uses: actions/cache@v4
+        with:
+          path: discord-daily-bot/downloads
+          key: downloads-${{ github.run_id }}
+          restore-keys: |
+            downloads-
 
       - name: Debug workspace
         run: |
@@ -52,7 +60,7 @@ jobs:
             -e DISCORD_TOKEN="${{ secrets.DISCORD_TOKEN }}" \
             -e CHANNEL_ID="${{ secrets.CHANNEL_ID }}" \
             -e WEBPAGE_URL='https://uma.moe/circles/231400257' \
-            -e DELETE_EXISTING='false' \
+            -e DELETE_EXISTING='true' \
             -v "$GITHUB_WORKSPACE/discord-daily-bot/downloads":/app/downloads \
             "$IMAGE" \
             /bin/bash -lc "node index.js" > run.log 2>&1 || true
