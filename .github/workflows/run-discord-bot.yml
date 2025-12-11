@@ -20,8 +20,8 @@ jobs:
           echo "GITHUB_WORKSPACE=$GITHUB_WORKSPACE";
           echo "PWD=$(pwd)";
           echo "List workspace root:"; ls -la "$GITHUB_WORKSPACE" || true;
-          echo "List repo subfolders:"; ls -la "$GITHUB_WORKSPACE"/* || true;
-          echo "List discord-daily-bot subfolder:"; ls -la "$GITHUB_WORKSPACE/discord-daily-bot" || true;
+          echo "List repo files (root):"; ls -la . || true;
+          echo "Show package.json path (if present):"; if [ -f "$GITHUB_WORKSPACE/package.json" ]; then echo "package.json at $GITHUB_WORKSPACE/package.json"; else echo "no package.json at repo root"; fi
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -31,7 +31,9 @@ jobs:
       - name: Install dependencies
         run: |
           # package-lock.json is not present in this repo, so use npm install in CI
-          cd "$GITHUB_WORKSPACE/discord-daily-bot"
+          cd "$GITHUB_WORKSPACE"
+          echo "Installing dependencies in $PWD";
+          ls -la || true
           npm install --no-audit --no-fund
 
       - name: Run bot (generate + post) and capture logs
@@ -42,8 +44,10 @@ jobs:
           DELETE_EXISTING: 'true'
         run: |
           # run the bot and capture stdout/stderr
-          cd "$GITHUB_WORKSPACE/discord-daily-bot"
-          echo "Listing project folder:"; ls -la . || true
+          cd "$GITHUB_WORKSPACE"
+          echo "Listing repo root:"; ls -la . || true
+          echo "Node version: $(node -v)";
+          echo "NPM version: $(npm -v)";
           node index.js > run.log 2>&1 || true
           echo "=== Bot run log ==="
           tail -n +1 run.log || true
