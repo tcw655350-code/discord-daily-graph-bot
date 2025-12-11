@@ -52,7 +52,7 @@ jobs:
             -e DISCORD_TOKEN="${{ secrets.DISCORD_TOKEN }}" \
             -e CHANNEL_ID="${{ secrets.CHANNEL_ID }}" \
             -e WEBPAGE_URL='https://uma.moe/circles/231400257' \
-            -e DELETE_EXISTING='true' \
+            -e DELETE_EXISTING='false' \
             -v "$GITHUB_WORKSPACE/discord-daily-bot/downloads":/app/downloads \
             "$IMAGE" \
             /bin/bash -lc "node index.js" > run.log 2>&1 || true
