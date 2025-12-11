@@ -15,49 +15,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Debug workspace
-        run: |
-          echo "GITHUB_WORKSPACE=$GITHUB_WORKSPACE";
-          echo "PWD=$(pwd)";
-          echo "List workspace root:"; ls -la "$GITHUB_WORKSPACE" || true;
-          echo "List repo files (root):"; ls -la . || true;
-          echo "Show package.json path (if present):"; if [ -f "$GITHUB_WORKSPACE/package.json" ]; then echo "package.json at $GITHUB_WORKSPACE/package.json"; else echo "no package.json at repo root"; fi
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
 
-      - name: Locate package.json files
-        run: |
-          echo "Searching for package.json files in the repo...";
-          find "$GITHUB_WORKSPACE" -maxdepth 4 -type f -name 'package.json' -print || true
-          echo "Also search current directory:"; find . -maxdepth 4 -type f -name 'package.json' -print || true
-
       - name: Install dependencies
-        continue-on-error: true
         run: |
-          # Detect project directory (where package.json lives) and install there
-          echo "Detecting project directory containing package.json..."
-          PROJECT_DIR=$(find "$GITHUB_WORKSPACE" -maxdepth 3 -type f -name 'package.json' -print -quit | xargs -r dirname || true)
-          if [ -z "$PROJECT_DIR" ]; then
-            echo "No package.json found under $GITHUB_WORKSPACE (maxdepth 3). Falling back to repo root.";
-            PROJECT_DIR="$GITHUB_WORKSPACE"
-          fi
-          echo "PROJECT_DIR=$PROJECT_DIR";
-          cd "$PROJECT_DIR"
-          echo "Installing dependencies in $PWD";
-          ls -la || true
-          npm install --no-audit --no-fund || true
-
-      - name: Collect npm debug logs
-        if: always()
-        run: |
-          echo "Collecting npm debug logs (if any) into workspace";
-          mkdir -p "$GITHUB_WORKSPACE/logs" || true
-          cp /home/runner/.npm/_logs/*.log "$GITHUB_WORKSPACE/logs/" 2>/dev/null || true
-          echo "Logs copied:"; ls -la "$GITHUB_WORKSPACE/logs" || true
-          echo "Tail of npm logs (if present):"; for f in "$GITHUB_WORKSPACE"/logs/*.log; do echo "===== $f ====="; tail -n 200 "$f" || true; done
+          # package-lock.json is not present in this repo, so use npm install in CI
+          npm install --no-audit --no-fund
 
       - name: Run bot (generate + post) and capture logs
         env:
@@ -66,19 +32,7 @@ jobs:
           WEBPAGE_URL: 'https://uma.moe/circles/231400257'
           DELETE_EXISTING: 'true'
         run: |
-          # Detect project directory and run the bot from there
-          echo "Detecting project directory containing package.json..."
-          PROJECT_DIR=$(find "$GITHUB_WORKSPACE" -maxdepth 3 -type f -name 'package.json' -print -quit | xargs -r dirname || true)
-          if [ -z "$PROJECT_DIR" ]; then
-            echo "No package.json found under $GITHUB_WORKSPACE (maxdepth 3). Falling back to repo root.";
-            PROJECT_DIR="$GITHUB_WORKSPACE"
-          fi
-          echo "PROJECT_DIR=$PROJECT_DIR";
-          cd "$PROJECT_DIR"
-          echo "Listing project folder:"; ls -la . || true
-          echo "Node version: $(node -v)";
-          echo "NPM version: $(npm -v)";
-          echo "Running node index.js";
+          # run the bot and capture stdout/stderr
           node index.js > run.log 2>&1 || true
           echo "=== Bot run log ==="
           tail -n +1 run.log || true
@@ -87,6 +41,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: run-logs
-          path: |
-            run.log
-            logs/**
+          path: run.log
