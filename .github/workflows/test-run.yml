@@ -1,0 +1,29 @@
+name: Test push-run
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Print timestamp
+        run: echo "Test run at $(date)"
+
+      - name: Create test output
+        run: |
+          echo "ok" > run.txt
+          echo "Repo: $GITHUB_REPOSITORY" >> run.txt
+          echo "Ref: $GITHUB_REF" >> run.txt
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-artifact
+          path: run.txt
