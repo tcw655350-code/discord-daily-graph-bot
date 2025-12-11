@@ -48,6 +48,7 @@ jobs:
           docker pull "$IMAGE" || true
           echo "Running container from image $IMAGE (mounted downloads)";
           docker run --rm --shm-size=1g \
+            --user root \
             -e DISCORD_TOKEN="${{ secrets.DISCORD_TOKEN }}" \
             -e CHANNEL_ID="${{ secrets.CHANNEL_ID }}" \
             -e WEBPAGE_URL='https://uma.moe/circles/231400257' \
