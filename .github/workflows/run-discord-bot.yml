@@ -21,12 +21,13 @@ jobs:
           node-version: '18'
 
       - name: Install dependencies
-        working-directory: ./
+        working-directory: ./discord-daily-bot
         run: |
           # package-lock.json is not present in this repo, so use npm install in CI
           npm install --no-audit --no-fund
 
       - name: Run bot (generate + post) and capture logs
+        working-directory: ./discord-daily-bot
         env:
           DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
           CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
