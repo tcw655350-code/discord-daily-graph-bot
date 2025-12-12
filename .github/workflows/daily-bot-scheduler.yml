@@ -2,7 +2,7 @@ name: Discord Bot Daily Scheduler
 
 on:
   schedule:
-    - cron: '* 17 * * *' # daily at 5pm GMT (testing)
+    - cron: '30 17 * * *' # daily at 5pm GMT (testing)
   workflow_dispatch:
 
 jobs:
