@@ -1,0 +1,74 @@
+name: Discord Bot Daily Scheduler
+
+on:
+  schedule:
+    - cron: '40 16 * * *' # daily at 4:40pm GMT (testing)
+  workflow_dispatch:
+
+jobs:
+  run-bot:
+    name: Run and log bot
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Restore downloads cache
+        uses: actions/cache@v4
+        with:
+          path: discord-daily-bot/downloads
+          key: downloads-${{ github.run_id }}
+          restore-keys: |
+            downloads-
+
+      - name: Debug workspace
+        run: |
+          echo "GITHUB_WORKSPACE=$GITHUB_WORKSPACE";
+          echo "PWD=$(pwd)";
+          echo "List workspace root:"; ls -la "$GITHUB_WORKSPACE" || true;
+          echo "List repo files (root):"; ls -la . || true;
+          echo "Show package.json path (if present):"; if [ -f "$GITHUB_WORKSPACE/package.json" ]; then echo "package.json at $GITHUB_WORKSPACE/package.json"; else echo "no package.json at repo root"; fi
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Locate package.json files
+        run: |
+          echo "Searching for package.json files in the repo...";
+          find "$GITHUB_WORKSPACE" -maxdepth 4 -type f -name 'package.json' -print || true
+          echo "Also search current directory:"; find . -maxdepth 4 -type f -name 'package.json' -print || true
+
+      - name: Pull & run Docker Hub image and capture logs
+        env:
+          DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+          CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
+          WEBPAGE_URL: 'https://uma.moe/circles/231400257'
+          DELETE_EXISTING: 'true'
+        run: |
+          # ensure downloads folder exists on runner and mount it into container
+          mkdir -p "$GITHUB_WORKSPACE/discord-daily-bot/downloads" || true
+          IMAGE=stressgilababi/discord-daily-bot:latest
+          echo "Pulling image $IMAGE";
+          docker pull "$IMAGE" || true
+          echo "Running container from image $IMAGE (mounted downloads)";
+          docker run --rm --shm-size=1g \
+            --user root \
+            -e DISCORD_TOKEN="${{ secrets.DISCORD_TOKEN }}" \
+            -e CHANNEL_ID="${{ secrets.CHANNEL_ID }}" \
+            -e WEBPAGE_URL='https://uma.moe/circles/231400257' \
+            -e DELETE_EXISTING='true' \
+            -v "$GITHUB_WORKSPACE/discord-daily-bot/downloads":/app/downloads \
+            "$IMAGE" \
+            /bin/bash -lc "node index.js" > run.log 2>&1 || true
+          echo "=== Bot run log ==="
+          tail -n +1 run.log || true
+
+      - name: Upload run logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: run-logs
+          path: |
+            run.log
+            logs/**
