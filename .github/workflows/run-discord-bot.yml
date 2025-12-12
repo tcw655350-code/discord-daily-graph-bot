@@ -2,10 +2,8 @@ name: Run Discord Daily Bot (schedule + manual)
 
 on:
   schedule:
-    - cron: '40 16 * * *' # daily at 4:40am GMT (testing)
+    - cron: '30 15 * * *' # daily at 3:30pm GMT
   workflow_dispatch:
-  push:
-    branches: [ main ]
 
 jobs:
   run-bot:
