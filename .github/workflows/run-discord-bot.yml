@@ -43,7 +43,7 @@ jobs:
       - name: Pull & run Docker Hub image and capture logs
         env:
           DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
-          CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
+          CHANNEL_ID: ${{ vars.CHANNEL_ID }}
           WEBPAGE_URL: 'https://uma.moe/circles/231400257'
           DELETE_EXISTING: 'true'
         run: |
