@@ -2,7 +2,7 @@ name: Run Discord Daily Bot (schedule + manual)
 
 on:
   schedule:
-    - cron: '30 15 * * *' # daily at 3:30pm GMT
+    - cron: '30 16 * * *' # daily at 12:30am Malaysia time
   workflow_dispatch:
 
 jobs:
@@ -43,6 +43,7 @@ jobs:
           CHANNEL_ID: ${{ vars.CHANNEL_ID }}
           WEBPAGE_URL: 'https://uma.moe/circles/231400257'
           DELETE_EXISTING: 'true'
+          TZ: 'Asia/Kuala_Lumpur'
         run: |
           set -o pipefail
           # ensure downloads folder exists on runner and mount it into container
@@ -57,6 +58,7 @@ jobs:
             -e CHANNEL_ID="${{ vars.CHANNEL_ID }}" \
             -e WEBPAGE_URL='https://uma.moe/circles/231400257' \
             -e DELETE_EXISTING='true' \
+            -e TZ='Asia/Kuala_Lumpur' \
             -v "$GITHUB_WORKSPACE/discord-daily-bot/downloads":/app/downloads \
             "$IMAGE" \
             /bin/bash -lc "node index.js" 2>&1 | tee run.log
