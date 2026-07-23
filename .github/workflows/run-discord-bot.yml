@@ -2,7 +2,7 @@ name: Run Discord Daily Bot (schedule + manual)
 
 on:
   schedule:
-    - cron: '30 16 * * *' # daily at 12:30am Malaysia time
+    - cron: '0 17 * * *' # daily at 1:00am Malaysia time
   workflow_dispatch:
 
 jobs:
@@ -16,7 +16,7 @@ jobs:
       - name: Restore downloads cache
         uses: actions/cache@v4
         with:
-          path: discord-daily-bot/downloads
+          path: downloads
           key: downloads-${{ github.run_id }}
           restore-keys: |
             downloads-
@@ -37,7 +37,11 @@ jobs:
           echo "Searching for package.json files in the repo...";
           find "$GITHUB_WORKSPACE" -maxdepth 4 -type f -name 'package.json' -print || true
           echo "Also search current directory:"; find . -maxdepth 4 -type f -name 'package.json' -print || true
-      - name: Pull & run Docker Hub image and capture logs
+      - name: Build current checkout
+        run: |
+          docker build -t discord-daily-bot:actions .
+
+      - name: Run current checkout and capture logs
         env:
           DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
           CHANNEL_ID: ${{ vars.CHANNEL_ID }}
@@ -47,11 +51,9 @@ jobs:
         run: |
           set -o pipefail
           # ensure downloads folder exists on runner and mount it into container
-          mkdir -p "$GITHUB_WORKSPACE/discord-daily-bot/downloads" || true
-          IMAGE=stressgilababi/discord-daily-bot:latest
-          echo "Pulling image $IMAGE";
-          docker pull "$IMAGE" || true
-          echo "Running container from image $IMAGE (mounted downloads, max 12 minutes)";
+          mkdir -p "$GITHUB_WORKSPACE/downloads"
+          IMAGE=discord-daily-bot:actions
+          echo "Running image built from commit $GITHUB_SHA (mounted downloads, max 12 minutes)";
           timeout 12m docker run --rm --shm-size=1g \
             --user root \
             -e DISCORD_TOKEN="${{ secrets.DISCORD_TOKEN }}" \
@@ -59,7 +61,7 @@ jobs:
             -e WEBPAGE_URL='https://uma.moe/circles/231400257' \
             -e DELETE_EXISTING='true' \
             -e TZ='Asia/Kuala_Lumpur' \
-            -v "$GITHUB_WORKSPACE/discord-daily-bot/downloads":/app/downloads \
+            -v "$GITHUB_WORKSPACE/downloads":/app/downloads \
             "$IMAGE" \
             /bin/bash -lc "node index.js" 2>&1 | tee run.log
           exit ${PIPESTATUS[0]}
