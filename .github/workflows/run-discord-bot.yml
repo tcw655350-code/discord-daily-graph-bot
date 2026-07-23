@@ -37,19 +37,7 @@ jobs:
           echo "Searching for package.json files in the repo...";
           find "$GITHUB_WORKSPACE" -maxdepth 4 -type f -name 'package.json' -print || true
           echo "Also search current directory:"; find . -maxdepth 4 -type f -name 'package.json' -print || true
-      - name: Build current checkout
-        run: |
-          DOCKERFILE="$(find "$GITHUB_WORKSPACE" -maxdepth 4 -type f -name Dockerfile -print -quit)"
-          if [ -z "$DOCKERFILE" ]; then
-            echo "::error::No Dockerfile exists in the checked-out commit."
-            find "$GITHUB_WORKSPACE" -maxdepth 4 -type f -print
-            exit 1
-          fi
-          BOT_DIR="$(dirname "$DOCKERFILE")"
-          echo "Building bot from $BOT_DIR"
-          docker build -t discord-daily-bot:actions "$BOT_DIR"
-
-      - name: Run current checkout and capture logs
+      - name: Pull and run current Docker image
         env:
           DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
           CHANNEL_ID: ${{ vars.CHANNEL_ID }}
@@ -58,16 +46,13 @@ jobs:
           TZ: 'Asia/Kuala_Lumpur'
         run: |
           set -o pipefail
-          DOCKERFILE="$(find "$GITHUB_WORKSPACE" -maxdepth 4 -type f -name Dockerfile -print -quit)"
-          if [ -z "$DOCKERFILE" ]; then
-            echo "::error::No Dockerfile exists in the checked-out commit."
-            exit 1
-          fi
-          BOT_DIR="$(dirname "$DOCKERFILE")"
           # ensure downloads folder exists on runner and mount it into container
+          BOT_DIR="$GITHUB_WORKSPACE/discord-daily-bot"
           mkdir -p "$BOT_DIR/downloads"
-          IMAGE=discord-daily-bot:actions
-          echo "Running image built from commit $GITHUB_SHA (mounted downloads, max 12 minutes)";
+          IMAGE=stressgilababi/discord-daily-bot:latest
+          echo "Pulling $IMAGE"
+          docker pull "$IMAGE"
+          echo "Running freshly pulled image (mounted downloads, max 12 minutes)";
           timeout 12m docker run --rm --shm-size=1g \
             --user root \
             -e DISCORD_TOKEN="${{ secrets.DISCORD_TOKEN }}" \
