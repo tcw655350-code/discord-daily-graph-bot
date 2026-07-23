@@ -2,7 +2,7 @@ name: Run Discord Daily Bot (schedule + manual) purple caps
 
 on:
   schedule:
-    - cron: '30 16 * * *' # Daily at 12:30am Malaysia time
+    - cron: '0 17 * * *' # Daily at 1:00am Malaysia time
   workflow_dispatch:
 
 jobs:
