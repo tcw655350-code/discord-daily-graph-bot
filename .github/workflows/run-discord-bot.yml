@@ -16,7 +16,7 @@ jobs:
       - name: Restore downloads cache
         uses: actions/cache@v4
         with:
-          path: downloads
+          path: discord-daily-bot/downloads
           key: downloads-${{ github.run_id }}
           restore-keys: |
             downloads-
@@ -39,7 +39,7 @@ jobs:
           echo "Also search current directory:"; find . -maxdepth 4 -type f -name 'package.json' -print || true
       - name: Build current checkout
         run: |
-          docker build -t discord-daily-bot:actions .
+          docker build -t discord-daily-bot:actions ./discord-daily-bot
 
       - name: Run current checkout and capture logs
         env:
@@ -51,7 +51,7 @@ jobs:
         run: |
           set -o pipefail
           # ensure downloads folder exists on runner and mount it into container
-          mkdir -p "$GITHUB_WORKSPACE/downloads"
+          mkdir -p "$GITHUB_WORKSPACE/discord-daily-bot/downloads"
           IMAGE=discord-daily-bot:actions
           echo "Running image built from commit $GITHUB_SHA (mounted downloads, max 12 minutes)";
           timeout 12m docker run --rm --shm-size=1g \
@@ -61,7 +61,7 @@ jobs:
             -e WEBPAGE_URL='https://uma.moe/circles/231400257' \
             -e DELETE_EXISTING='true' \
             -e TZ='Asia/Kuala_Lumpur' \
-            -v "$GITHUB_WORKSPACE/downloads":/app/downloads \
+            -v "$GITHUB_WORKSPACE/discord-daily-bot/downloads":/app/downloads \
             "$IMAGE" \
             /bin/bash -lc "node index.js" 2>&1 | tee run.log
           exit ${PIPESTATUS[0]}
